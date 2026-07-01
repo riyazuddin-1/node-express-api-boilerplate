@@ -1,0 +1,36 @@
+{
+  "name": "node-express-api-boilerplate",
+  "version": "1.0.0",
+  "description": "Production-ready Node.js Express API boilerplate with init-time database selection.",
+  "type": "module",
+  "bin": {
+    "create-node-express-api": "./init.js"
+  },
+  "scripts": {
+    "init": "node init.js",
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "node",
+    "express",
+    "api",
+    "boilerplate",
+    "postgres",
+    "mongo"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "mongoose": "^8.19.4",
+    "pg": "^8.16.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
