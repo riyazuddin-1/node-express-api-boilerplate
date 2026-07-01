@@ -1,7 +1,8 @@
-import DB from "../../config/db.js";
 import { DB_TYPE } from "../../config/env.js";
 
 export const listUsers = async () => {
+  const DB = (await import("../../config/db.js")).default;
+
   if (DB_TYPE === "mongo") {
     const users = new DB("users");
     return users.find({}).limit(50).toArray();

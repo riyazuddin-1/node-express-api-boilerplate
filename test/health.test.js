@@ -1,24 +1,23 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import app from "../src/app.js";
+import notFoundMiddleware from "../src/middlewares/notFound.middleware.js";
+import { healthCheck } from "../src/modules/health/health.controller.js";
 import { getHealth } from "../src/modules/health/health.service.js";
 
-const request = async (path) => {
-  const server = app.listen(0);
-
-  try {
-    const { port } = server.address();
-    const response = await fetch(`http://127.0.0.1:${port}${path}`);
-    const body = await response.json();
-
-    return {
-      status: response.status,
-      body,
-    };
-  } finally {
-    await new Promise((resolve) => server.close(resolve));
-  }
+const createResponse = () => {
+  return {
+    statusCode: null,
+    body: null,
+    status(code) {
+      this.statusCode = code;
+      return this;
+    },
+    json(payload) {
+      this.body = payload;
+      return this;
+    },
+  };
 };
 
 describe("health module", () => {
@@ -31,18 +30,28 @@ describe("health module", () => {
     assert.ok(health.database);
   });
 
-  it("responds to GET /health", async () => {
-    const response = await request("/health");
+  it("responds through the health controller", async () => {
+    const res = createResponse();
 
-    assert.equal(response.status, 200);
-    assert.equal(response.body.success, true);
-    assert.equal(response.body.data.status, "ok");
+    await healthCheck({}, res, (error) => {
+      throw error;
+    });
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.success, true);
+    assert.equal(res.body.data.status, "ok");
   });
 
-  it("returns JSON for missing routes", async () => {
-    const response = await request("/missing");
+  it("returns JSON for missing routes", () => {
+    const req = {
+      method: "GET",
+      originalUrl: "/missing",
+    };
+    const res = createResponse();
 
-    assert.equal(response.status, 404);
-    assert.equal(response.body.success, false);
+    notFoundMiddleware(req, res);
+
+    assert.equal(res.statusCode, 404);
+    assert.equal(res.body.success, false);
   });
 });

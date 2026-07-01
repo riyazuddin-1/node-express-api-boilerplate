@@ -66,26 +66,22 @@ const updatePackage = ({ projectName, dbChoice }) => {
 };
 
 const writeEnv = ({ projectName, dbChoice }) => {
+  const databaseName = projectName.replaceAll("-", "_");
   const env = [
     "NODE_ENV=development",
     "PORT=3000",
-    "LOG_FILE=_.ignore.logs",
-    `DB_TYPE=${dbChoice}`,
+    "LOG_LEVEL=debug",
+    "LOG_FILE=logs/app.log",
     "",
+    "# --- Database (Single URI per type) ---",
+    "# The app picks ONE of these based on DB_TYPE.",
+    `DATABASE_URL=postgres://user:pass@localhost:5432/${databaseName}`,
+    `MONGODB_URI=mongodb://localhost:27017/${databaseName}`,
+    "",
+    "# --- App Configuration ---",
+    `DB_TYPE=${dbChoice}`,
+    "JWT_SECRET=super-secret-key-change-me",
   ];
-
-  if (dbChoice === "postgres") {
-    env.push(
-      "# Postgres",
-      `POSTGRES_PROD=postgres://postgres:password@localhost:5432/${projectName.replaceAll("-", "_")}`,
-    );
-  } else {
-    env.push(
-      "# Mongo",
-      `MONGO_PROD=mongodb://localhost:27017/${projectName.replaceAll("-", "_")}`,
-      "MONGO_DATABASE_NAME=production",
-    );
-  }
 
   writeFileSync(join(__dirname, ".env"), `${env.join("\n")}\n`);
 };
@@ -99,6 +95,81 @@ const copyDbTemplate = (dbChoice) => {
   }
 
   writeFileSync(destinationPath, readFileSync(templatePath, "utf8"));
+};
+
+const writeReadme = ({ projectName, dbChoice }) => {
+  const title = projectName
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+
+  const readme = `# ${title}
+
+ESM-based Express API using ${dbChoice === "postgres" ? "Postgres" : "MongoDB"}.
+
+## Setup
+
+\`\`\`bash
+npm install
+npm run dev
+\`\`\`
+
+## Scripts
+
+\`\`\`bash
+npm run dev    # Start with node --watch
+npm start      # Start normally
+npm test       # Run node:test suite
+\`\`\`
+
+## Environment
+
+\`\`\`env
+NODE_ENV=development
+PORT=3000
+LOG_LEVEL=debug
+LOG_FILE=logs/app.log
+
+# --- Database (Single URI per type) ---
+# The app picks ONE of these based on DB_TYPE.
+DATABASE_URL=postgres://user:pass@localhost:5432/${projectName.replaceAll("-", "_")}
+MONGODB_URI=mongodb://localhost:27017/${projectName.replaceAll("-", "_")}
+
+# --- App Configuration ---
+DB_TYPE=${dbChoice}
+JWT_SECRET=super-secret-key-change-me
+\`\`\`
+
+## Structure
+
+\`\`\`text
+src
+├── app.js
+├── server.js
+├── config
+│   ├── constants.js
+│   ├── db.js
+│   ├── env.js
+│   └── logger.js
+├── middlewares
+├── modules
+└── utils
+\`\`\`
+
+## API Flow
+
+\`\`\`text
+Route -> Controller -> Service -> Repository -> src/config/db.js
+\`\`\`
+
+## Endpoints
+
+- \`GET /health\` - Service-backed health check.
+- \`GET /api/v1/users\` - Sample module showing repository usage.
+`;
+
+  writeFileSync(join(__dirname, "README.md"), readme);
 };
 
 const resetGit = () => {
@@ -133,6 +204,7 @@ const main = async () => {
   updatePackage({ projectName, dbChoice });
   writeEnv({ projectName, dbChoice });
   copyDbTemplate(dbChoice);
+  writeReadme({ projectName, dbChoice });
   cleanup();
   resetGit();
 

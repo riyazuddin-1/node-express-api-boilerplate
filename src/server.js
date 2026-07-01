@@ -1,12 +1,13 @@
 import app from "./app.js";
-import DB from "./config/db.js";
 import { PORT } from "./config/env.js";
 import logger from "./config/logger.js";
 
 let server = null;
+let DB = null;
 
 const start = async () => {
   try {
+    DB = (await import("./config/db.js")).default;
     await DB.init();
 
     server = app.listen(PORT, () => {
@@ -25,7 +26,7 @@ const shutdown = async () => {
     server.close();
   }
 
-  await DB.close();
+  await DB?.close();
   process.exit(0);
 };
 

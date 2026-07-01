@@ -1,10 +1,10 @@
 import { Pool } from "pg";
 import dotenv from "dotenv";
 
-import { POSTGRES } from "./env.js";
+import { DATABASE_URL } from "./env.js";
 import logger from "./logger.js";
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 class DB {
   static pool = null;
@@ -15,13 +15,13 @@ class DB {
     throw new Error("Use DB.init() and DB.query() instead of 'new DB()'.");
   }
 
-  static async init(connectionString = POSTGRES.PROD) {
+  static async init(connectionString = DATABASE_URL) {
     if (DB.initialized && DB.pool) {
       return DB.pool;
     }
 
     if (!connectionString) {
-      throw new Error("POSTGRES.PROD connection string is required");
+      throw new Error("DATABASE_URL connection string is required");
     }
 
     DB.pool = new Pool({

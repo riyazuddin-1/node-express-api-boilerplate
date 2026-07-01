@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 
-import { MONGO } from "./env.js";
+import { MONGODB_URI } from "./env.js";
 import logger from "./logger.js";
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 class DB {
   static connection = null;
@@ -22,7 +22,7 @@ class DB {
     return DB.database.collection(collectionName);
   }
 
-  static async init(mongoUri = MONGO.PROD) {
+  static async init(mongoUri = MONGODB_URI) {
     if (
       DB.initialized &&
       DB.database &&
@@ -32,21 +32,17 @@ class DB {
       return DB.database;
     }
 
-    const databaseName = MONGO.DATABASE_NAME || "production";
-
     if (!mongoUri) {
-      throw new Error("MONGO.PROD is required");
+      throw new Error("MONGODB_URI is required");
     }
 
-    DB.connection = await mongoose
-      .createConnection(mongoUri, { dbName: databaseName })
-      .asPromise();
+    DB.connection = await mongoose.createConnection(mongoUri).asPromise();
     DB.database = DB.connection.db;
     DB.initialized = true;
 
     DB.#bindShutdownHandlers();
 
-    logger.info(`MongoDB connected to ${databaseName}`);
+    logger.info(`MongoDB connected to ${DB.connection.name}`);
     return DB.database;
   }
 
